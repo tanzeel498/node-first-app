@@ -2,8 +2,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
 
-const adminData = require("./routes/admin");
+const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
+const errorController = require("./controllers/error");
 
 // CODE STARTS HERE
 const app = express();
@@ -14,12 +15,9 @@ app.set("views", "./views"); // do not need to do this as this is the default. w
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/admin", adminData.routes);
+app.use("/admin", adminRoutes);
 app.use(shopRoutes);
 
-app.use((req, res, next) => {
-  // layout is special key for handlebars and it will not use defaultLayout if it is false
-  res.status(404).render("404", { pageTitle: "Page Not Found" });
-});
+app.use(errorController.get404);
 
 app.listen(3000);
