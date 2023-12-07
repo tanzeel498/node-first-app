@@ -3,6 +3,12 @@ const path = require("node:path");
 
 const p = path.join(path.dirname(require.main.filename), "data", "cart.json");
 
+function writeToFile(data) {
+  fs.writeFile(p, data, (err) => {
+    console.log(err);
+  });
+}
+
 module.exports = class Cart {
   constructor() {
     this.cart = [];
@@ -30,9 +36,28 @@ module.exports = class Cart {
       cart.totalPrice += productPrice;
 
       // write the cart back to file
-      fs.writeFile(p, JSON.stringify(cart), (err) => {
-        console.log(err);
-      });
+      writeToFile(JSON.stringify(cart));
+    });
+  }
+
+  static deleteProduct(id, productPrice) {
+    fs.readFile(p, (err, fileContent) => {
+      if (err) return;
+
+      const cart = JSON.parse(fileContent);
+      const product = cart.products.find((product) => product.id === id);
+      if (!product) return;
+      cart.totalPrice -= product.quantity * productPrice;
+      cart.products = cart.products.filter((product) => product.id !== id);
+
+      fs.writeFile(p, JSON.stringify(cart), (err) => console.log(err));
+    });
+  }
+
+  static getCart(cb) {
+    fs.readFile(p, (err, fileContent) => {
+      if (err) cb(null);
+      else cb(JSON.parse(fileContent));
     });
   }
 };
