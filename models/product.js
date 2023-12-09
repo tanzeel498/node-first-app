@@ -1,23 +1,6 @@
-const fs = require("fs");
-const path = require("path");
+const db = require("../util/database");
 
 const Cart = require("./cart");
-
-const p = path.join(
-  path.dirname(require.main.filename),
-  "data",
-  "products.json"
-);
-
-const getProductsFromFile = (cb) => {
-  fs.readFile(p, (err, fileContent) => {
-    if (err) {
-      cb([]);
-    } else {
-      cb(JSON.parse(fileContent));
-    }
-  });
-};
 
 module.exports = class Product {
   constructor(id, title, imageUrl, price, description) {
@@ -29,41 +12,19 @@ module.exports = class Product {
   }
 
   save() {
-    getProductsFromFile((products) => {
-      if (this.id) {
-        // will execute for editing product
-        const existingProductIndex = products.findIndex(
-          (product) => product.id === this.id
-        );
-        products[existingProductIndex] = this;
-      } else {
-        this.id = Math.round(Math.random() * 10000000).toString();
-        products.push(this);
-      }
-      fs.writeFile(p, JSON.stringify(products), (err) => {
-        console.log(err);
-      });
-    });
+    return db.execute(
+      "INSERT INTO products (title, imageUrl, description, price) VALUES (?, ?, ?, ?)",
+      [this.title, this.imageUrl, this.description, this.price]
+    );
   }
 
-  static fetchAll(cb) {
-    getProductsFromFile(cb);
+  static fetchAll() {
+    return db.execute("SELECT * FROM products");
   }
 
-  static findbyId(id, cb) {
-    getProductsFromFile((products) => {
-      const product = products.find((p) => p.id === id);
-      cb(product);
-    });
+  static findbyId(id) {
+    return db.execute("SELECT * FROM products WHERE products.id = ?", [id]);
   }
 
-  static deleteById(id) {
-    getProductsFromFile((products) => {
-      const product = products.find((product) => product.id === id);
-      const updatedProducts = products.filter((product) => product.id !== id);
-      fs.writeFile(p, JSON.stringify(updatedProducts), (err) => {
-        if (!err) Cart.deleteProduct(id, product.price);
-      });
-    });
-  }
+  static deleteById(id) {}
 };
