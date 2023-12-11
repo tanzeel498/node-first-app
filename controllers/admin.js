@@ -1,8 +1,9 @@
-const { where } = require("sequelize");
 const Product = require("../models/product");
 
 exports.getProducts = (req, res, next) => {
-  Product.findAll()
+  // Product.findAll()
+  req.user
+    .getProducts()
     .then((products) => {
       res.render("admin/products", {
         prods: products,
@@ -23,7 +24,8 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, price, description } = req.body;
-  Product.create({ title, imageUrl, price, description })
+  req.user
+    .createProduct({ title, imageUrl, price, description })
     .then(() => res.redirect("/"))
     .catch((err) => console.log(err));
 };
@@ -33,11 +35,12 @@ exports.getEditProduct = (req, res, next) => {
   if (!editMode) return res.redirect("/");
 
   const productId = req.params.productId;
-  Product.findOne({ where: { id: productId } })
-    .then((product) => {
-      if (!product) return res.redirect("/");
+  req.user
+    .getProducts({ where: { id: productId } })
+    .then((products) => {
+      if (!products.length) return res.redirect("/");
       res.render("admin/edit-product", {
-        product,
+        product: products.at(0),
         pageTitle: "Edit Product",
         path: "/admin/edit-product",
         editing: editMode,
@@ -48,7 +51,7 @@ exports.getEditProduct = (req, res, next) => {
 
 exports.postEditProduct = (req, res, next) => {
   const { productId, title, imageUrl, price, description } = req.body;
-  Product.findOne({ where: { id: productId } })
+  Product.findByPk(productId)
     .then((product) => {
       product.title = title;
       product.description = description;

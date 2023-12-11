@@ -27,7 +27,7 @@ exports.getIndex = (req, res, next) => {
 
 exports.getProduct = (req, res, next) => {
   const productId = req.params.productId;
-  Product.findOne({ where: { id: productId } })
+  Product.findByPk(productId)
     .then((product) => {
       res.render("shop/product-detail", {
         product: product,
@@ -39,36 +39,61 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getCart = (req, res, next) => {
-  Cart.getCart((cart) => {
-    Product.fetchAll((products) => {
-      cart.products = cart.products.map((item) => {
-        const product = products.find((product) => item.id === product.id);
-        return { productData: product, qty: item.quantity };
-      });
-
+  req.user
+    .getCart()
+    .then((cart) => {
+      return cart.getProducts();
+    })
+    .then((products) => {
       res.render("shop/cart", {
-        products: cart.products,
+        products,
         path: "/cart",
         pageTitle: "Your Cart",
       });
-    });
-  });
+    })
+    .catch((err) => console.log(err));
 };
 
 exports.postCart = (req, res, next) => {
   const productId = req.body.productId;
-  Product.findbyId(productId, (product) => {
-    Cart.addProduct(productId, product.price);
-  });
-  res.redirect("/cart");
+  let fetchedCart;
+  let quantity = 1;
+
+  req.user
+    .getCart()
+    .then((cart) => {
+      fetchedCart = cart;
+      return cart.getProducts({ where: { id: productId } });
+    })
+    .then((products) => {
+      const product = products.at(0);
+      console.log(products);
+      if (!product) {
+        return Product.findByPk(productId);
+      } else {
+        quantity = product.cartItem.quantity + 1;
+        return product;
+      }
+    })
+    .then((product) => {
+      return fetchedCart.addProduct(product, { through: { quantity } });
+    })
+    .then(() => res.redirect("/cart"))
+    .catch((err) => console.log(err));
 };
 
 exports.postCartDeleteProduct = (req, res, next) => {
   const productId = req.body.productId;
-  Product.findbyId(productId, (product) => {
-    Cart.deleteProduct(productId, product.price);
-    res.redirect("/cart");
-  });
+  req.user
+    .getCart()
+    .then((cart) => {
+      return cart.getProducts({ where: { id: productId } });
+    })
+    .then((products) => {
+      return products.at(0).cartItem.destroy();
+    })
+    .then(() => res.redirect("/cart"))
+    .catch((err) => console.log(err));
 };
 
 exports.getOrders = (req, res, next) => {
