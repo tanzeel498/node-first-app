@@ -1,8 +1,15 @@
-const { Sequelize } = require("sequelize");
+const { MongoClient, ServerApiVersion } = require("mongodb");
 
-const sequelize = new Sequelize("node-complete", "root", "hjI$5_()_pak%123", {
-  host: "localhost",
-  dialect: "mysql",
+const uri =
+  "mongodb+srv://tanzeel498:BOTFijyz20Cq7LlV@cluster0.vln0kdt.mongodb.net/?retryWrites=true&w=majority";
+
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  },
 });
 
-module.exports = sequelize;
+const db = client.db("shop");
+module.exports = db;

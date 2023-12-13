@@ -1,18 +1,18 @@
 const Product = require("../models/product");
 
-exports.getProducts = (req, res, next) => {
-  // Product.findAll()
-  req.user
-    .getProducts()
-    .then((products) => {
-      res.render("admin/products", {
-        prods: products,
-        pageTitle: "Admin Products",
-        path: "/admin/products",
-      });
-    })
-    .catch((err) => console.log(err));
-};
+// exports.getProducts = (req, res, next) => {
+//   // Product.findAll()
+//   req.user
+//     .getProducts()
+//     .then((products) => {
+//       res.render("admin/products", {
+//         prods: products,
+//         pageTitle: "Admin Products",
+//         path: "/admin/products",
+//       });
+//     })
+//     .catch((err) => console.log(err));
+// };
 
 exports.getAddProduct = (req, res, next) => {
   res.render("admin/edit-product", {
@@ -24,12 +24,16 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, price, description } = req.body;
-  req.user
-    .createProduct({ title, imageUrl, price, description })
-    .then(() => res.redirect("/"))
+  const product = new Product(title, price, description, imageUrl);
+  product
+    .save()
+    .then((result) => {
+      console.log(result);
+      res.redirect("/admin/products");
+    })
     .catch((err) => console.log(err));
 };
-
+/*
 exports.getEditProduct = (req, res, next) => {
   const editMode = req.query.edit;
   if (!editMode) return res.redirect("/");
@@ -72,3 +76,4 @@ exports.postDeleteProduct = (req, res, next) => {
     })
     .catch((err) => console.log(err));
 };
+*/
