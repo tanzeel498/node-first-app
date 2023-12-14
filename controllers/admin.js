@@ -22,13 +22,17 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, price, description } = req.body;
-  const product = new Product(null, title, price, description, imageUrl);
+  const product = new Product(
+    null,
+    title,
+    price,
+    description,
+    imageUrl,
+    req.user._id
+  );
   product
     .save()
-    .then((result) => {
-      console.log(result);
-      res.redirect("/admin/products");
-    })
+    .then(() => res.redirect("/admin/products"))
     .catch((err) => console.log(err));
 };
 
