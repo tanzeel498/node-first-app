@@ -24,9 +24,7 @@ const productSchema = new Schema({
   },
 });
 
-const Product = model("Product", productSchema);
-
-module.exports = Product;
+module.exports = model("Product", productSchema);
 
 // const mongodb = require("mongodb");
 // const db = require("../util/database");
