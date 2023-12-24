@@ -1,72 +1,30 @@
 const { Schema, model } = require("mongoose");
 
+const skuSchema = new Schema({ size: Number, available: Boolean });
+
+const colorSchema = new Schema(
+  {
+    styleColor: { type: String, required: true },
+    colorDescription: { type: String, required: true },
+    fullPrice: { type: Number, required: true },
+    currentPrice: { type: Number, required: true },
+    portraitUrl: { type: String, required: true },
+    squarishUrl: { type: String, required: true },
+    images: [{ src: String, alt: String }],
+    skus: [skuSchema],
+  },
+  { _id: false }
+);
+
 const productSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  description: {
-    type: String,
-    required: true,
-  },
-  imageUrl: {
-    type: String,
-    required: true,
-  },
-  userId: {
-    type: Schema.Types.ObjectId,
-    required: true,
-    ref: "User",
-  },
+  title: { type: String, required: true },
+  subtitle: { type: String, required: true },
+  description: { type: String, required: true },
+  descriptionPreview: { type: String, required: true },
+  gender: [{ type: String, required: true }],
+  styleCode: { type: String, required: true },
+  category: [{ type: String, required: true }],
+  colors: [colorSchema],
 });
 
 module.exports = model("Product", productSchema);
-
-// const mongodb = require("mongodb");
-// const db = require("../util/database");
-
-// class Product {
-//   constructor(title, price, description, imageUrl, id, userId) {
-//     this.title = title;
-//     this.price = price;
-//     this.description = description;
-//     this.imageUrl = imageUrl;
-//     this._id = id ? new mongodb.ObjectId(id) : null;
-//     this.userId = userId;
-//   }
-
-//   save() {
-//     let dbOp;
-//     if (this._id) {
-//       // Update the product
-//       dbOp = db
-//         .collection("products")
-//         .updateOne({ _id: this._id }, { $set: this });
-//     } else {
-//       dbOp = db.collection("products").insertOne(this);
-//     }
-//     return dbOp;
-//   }
-
-//   static fetchAll() {
-//     return db.collection("products").find().toArray();
-//   }
-
-//   static findById(prodId) {
-//     return db
-//       .collection("products")
-//       .findOne({ _id: new mongodb.ObjectId(prodId) });
-//   }
-
-//   static deleteById(prodId) {
-//     return db
-//       .collection("products")
-//       .deleteOne({ _id: new mongodb.ObjectId(prodId) });
-//   }
-// }
-
-// module.exports = Product;
