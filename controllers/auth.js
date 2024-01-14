@@ -6,6 +6,7 @@ exports.getLogin = (req, res, next) => {
     path: "/login",
     pageTitle: "Login",
     isAuthenticated: false,
+    errorMessage: req.flash("error"),
   });
 };
 
@@ -22,9 +23,15 @@ exports.postLogin = (req, res, next) => {
 
   User.findOne({ email })
     .then((user) => {
-      if (!user) return res.redirect("/login");
+      if (!user) {
+        req.flash("error", "Username does not exist!");
+        return res.redirect("/login");
+      }
       bcrypt.compare(password, user.password).then((hasMatched) => {
-        if (!hasMatched) return res.redirect("/login");
+        if (!hasMatched) {
+          req.flash("error", "Incorrect Password!");
+          return res.redirect("/login");
+        }
         req.session.isLoggedIn = true;
         req.session.user = user;
         res.redirect("/");
