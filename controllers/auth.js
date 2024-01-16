@@ -6,7 +6,7 @@ exports.getLogin = (req, res, next) => {
     path: "/login",
     pageTitle: "Login",
     isAuthenticated: false,
-    errorMessage: req.flash("error"),
+    errorMessage: req.flash("error").at(0),
   });
 };
 
