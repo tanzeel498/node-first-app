@@ -1,5 +1,13 @@
-const User = require("../models/user");
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer");
+
+const User = require("../models/user");
+
+const transporter = nodemailer.createTransport({
+  host: "smtp-relay.brevo.com",
+  port: 587,
+  auth: { user: "tanzeel498@gmail.com", pass: process.env.BREVO_SMTP_KEY },
+});
 
 exports.getLogin = (req, res, next) => {
   res.render("auth/login", {
@@ -60,6 +68,19 @@ exports.postSignup = (req, res, next) => {
           return user.save();
         })
         .then((result) => {
+          transporter.sendMail(
+            {
+              from: "noreply@nodeShop.com",
+              to: email,
+              subject: "SignUp Successfull",
+              text: "Hello new User!!!",
+              html: "<h1>Your account was created successfully!</h1><p>You can enjoy a free stay with for the rest of your life</p>",
+            },
+            function (err, info) {
+              if (err) console.log(err);
+              console.log(info);
+            }
+          );
           res.redirect("/login");
         });
     })
