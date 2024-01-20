@@ -13,7 +13,6 @@ exports.getLogin = (req, res, next) => {
   res.render("auth/login", {
     path: "/login",
     pageTitle: "Login",
-    isAuthenticated: false,
     errorMessage: req.flash("error").at(0),
   });
 };
@@ -22,7 +21,6 @@ exports.getSignup = (req, res, next) => {
   res.render("auth/signup", {
     path: "/signup",
     pageTitle: "Signup",
-    isAuthenticated: false,
     errorMessage: req.flash("error").at(0),
   });
 };
@@ -68,7 +66,8 @@ exports.postSignup = (req, res, next) => {
           return user.save();
         })
         .then((result) => {
-          transporter.sendMail(
+          res.redirect("/login");
+          return transporter.sendMail(
             {
               from: "noreply@nodeShop.com",
               to: email,
@@ -78,11 +77,11 @@ exports.postSignup = (req, res, next) => {
             },
             function (err, info) {
               if (err) console.log(err);
-              console.log(info);
+              console.log(info.messageId);
             }
           );
-          res.redirect("/login");
-        });
+        })
+        .catch((err) => console.log(err));
     })
     .catch((err) => console.log(err));
 };
@@ -91,5 +90,13 @@ exports.postLogout = (req, res, next) => {
   req.session.destroy((err) => {
     console.log(err);
     res.redirect("/");
+  });
+};
+
+exports.getReset = (req, res, next) => {
+  res.render("auth/reset", {
+    path: "/reset",
+    pageTitle: "Reset Password",
+    errorMessage: req.flash("error").at(0),
   });
 };
