@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
+const crypto = require("node:crypto");
 
 const User = require("../models/user");
 
@@ -31,12 +32,12 @@ exports.postLogin = (req, res, next) => {
   User.findOne({ email })
     .then((user) => {
       if (!user) {
-        req.flash("error", "Username does not exist!");
+        req.flash("error", "Incorrect Email or Password!");
         return res.redirect("/login");
       }
       bcrypt.compare(password, user.password).then((hasMatched) => {
         if (!hasMatched) {
-          req.flash("error", "Incorrect Password!");
+          req.flash("error", "Incorrect Email or Password!");
           return res.redirect("/login");
         }
         req.session.isLoggedIn = true;
@@ -72,7 +73,6 @@ exports.postSignup = (req, res, next) => {
               from: "noreply@nodeShop.com",
               to: email,
               subject: "SignUp Successfull",
-              text: "Hello new User!!!",
               html: "<h1>Your account was created successfully!</h1><p>You can enjoy a free stay with for the rest of your life</p>",
             },
             function (err, info) {
@@ -99,4 +99,61 @@ exports.getReset = (req, res, next) => {
     pageTitle: "Reset Password",
     errorMessage: req.flash("error").at(0),
   });
+};
+
+exports.postReset = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      req.flash("error", "Email does not exist!");
+      return res.redirect("/reset");
+    }
+    const token = crypto.randomBytes(32).toString("hex");
+    user.passwordReset = { token, expire: Date.now() + 30 * 60 * 1000 };
+    user.save().then((user) => {
+      res.redirect("/login");
+      return transporter.sendMail({
+        from: "noreply@nodeShop.com",
+        to: email,
+        subject: "Password Reset",
+        html: `
+        <p>You requested a password reset</p>
+        <p>Click this <a href="http://localhost:4000/reset/${token}">link</a> to set a new password.</p>
+        `,
+      });
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+exports.getUpdatePassword = async (req, res, next) => {
+  const { token } = req.params;
+  const user = await User.findOne({
+    "passwordReset.token": token,
+    "passwordReset.expire": { $gt: Date.now() },
+  });
+
+  if (!user) return res.redirect("/");
+  res.render("auth/update-password", {
+    path: "/update-password",
+    pageTitle: "Update Password",
+    errorMessage: req.flash("error").at(0),
+    token,
+  });
+};
+
+exports.postUpdatePassword = async (req, res) => {
+  const { password, token } = req.body;
+  const user = await User.findOne({
+    "passwordReset.token": token,
+    "passwordReset.expire": { $gt: Date.now() },
+  });
+  if (!user) return res.redirect("/");
+
+  user.password = await bcrypt.hash(password, 12);
+  user.passwordReset = undefined;
+  await user.save();
+  res.redirect("/login");
 };
