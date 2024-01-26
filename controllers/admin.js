@@ -26,7 +26,7 @@ exports.postAddProduct = (req, res, next) => {
   if (!errors.isEmpty()) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
-      path: "/admin/edit-product",
+      path: "/admin/add-product",
       editing: false,
       hasError: true,
       product: { title, imageUrl, price, description },
@@ -36,6 +36,7 @@ exports.postAddProduct = (req, res, next) => {
   }
 
   const product = new Product({
+    // _id: "65a50ecb8ed97e002bd5ff7e",
     title: title,
     price: price,
     description: description,
@@ -50,7 +51,7 @@ exports.postAddProduct = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      console.log(err);
+      return res.redirect("/500");
     });
 };
 
