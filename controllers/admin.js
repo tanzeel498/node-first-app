@@ -51,7 +51,7 @@ exports.postAddProduct = (req, res, next) => {
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      return res.redirect("/500");
+      return next(err);
     });
 };
 
@@ -76,7 +76,7 @@ exports.getEditProduct = (req, res, next) => {
         validationErrors: [],
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => next(err));
 };
 
 exports.postEditProduct = (req, res, next) => {
