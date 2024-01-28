@@ -61,7 +61,7 @@ exports.postLogin = (req, res, next) => {
         res.redirect("/");
       });
     })
-    .catch((err) => console.log(err));
+    .catch((err) => next(err));
 };
 
 exports.getSignup = (req, res, next) => {
@@ -113,7 +113,7 @@ exports.postSignup = (req, res, next) => {
         }
       );
     })
-    .catch((err) => console.log(err));
+    .catch((err) => next(err));
 };
 
 exports.postLogout = (req, res, next) => {
@@ -154,7 +154,7 @@ exports.postReset = async (req, res) => {
       });
     });
   } catch (err) {
-    console.error(err);
+    next(err);
   }
 };
 
@@ -176,14 +176,18 @@ exports.getUpdatePassword = async (req, res, next) => {
 
 exports.postUpdatePassword = async (req, res) => {
   const { password, token } = req.body;
-  const user = await User.findOne({
-    "passwordReset.token": token,
-    "passwordReset.expire": { $gt: Date.now() },
-  });
-  if (!user) return res.redirect("/");
+  try {
+    const user = await User.findOne({
+      "passwordReset.token": token,
+      "passwordReset.expire": { $gt: Date.now() },
+    });
+    if (!user) return res.redirect("/");
 
-  user.password = await bcrypt.hash(password, 12);
-  user.passwordReset = undefined;
-  await user.save();
+    user.password = await bcrypt.hash(password, 12);
+    user.passwordReset = undefined;
+    await user.save();
+  } catch (error) {
+    next(error);
+  }
   res.redirect("/login");
 };
