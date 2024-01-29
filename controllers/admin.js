@@ -36,7 +36,7 @@ exports.postAddProduct = (req, res, next) => {
   }
 
   const product = new Product({
-    // _id: "65a50ecb8ed97e002bd5ff7e",
+    _id: "65a50ecb8ed97e002bd5ff7e",
     title: title,
     price: price,
     description: description,
@@ -46,7 +46,6 @@ exports.postAddProduct = (req, res, next) => {
   product
     .save()
     .then((result) => {
-      // console.log(result);
       console.log("Created Product");
       res.redirect("/admin/products");
     })

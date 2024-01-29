@@ -44,9 +44,7 @@ app.use((req, res, next) => {
       if (user) req.user = user;
       next();
     })
-    .catch((err) => {
-      throw new Error(err);
-    });
+    .catch((err) => next(err));
 });
 
 app.use((req, res, next) => {
@@ -61,7 +59,10 @@ app.use(authRoutes);
 app.use("/500", errorController.get500);
 app.use(errorController.get404);
 app.use((error, req, res, next) => {
-  res.redirect("/500");
+  res.status(500).render("500", {
+    pageTitle: "Error!",
+    path: "/500",
+  });
 });
 
 mongoose
