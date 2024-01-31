@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const session = require("express-session");
 const MongoDBStore = require("connect-mongodb-session")(session);
 const flash = require("connect-flash");
+const multer = require("multer");
 
 const errorController = require("./controllers/error");
 const User = require("./models/user");
@@ -21,6 +22,17 @@ const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
   collection: "sessions",
+});
+const fileStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "images");
+  },
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      new Date().toISOString().replace(/:/g, "-") + "-" + file.originalname
+    );
+  },
 });
 
 app.set("view engine", "ejs");
@@ -52,13 +64,18 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/admin", adminRoutes);
+app.use(
+  "/admin",
+  multer({ storage: fileStorage }).single("image"),
+  adminRoutes
+);
 app.use(shopRoutes);
 app.use(authRoutes);
 
 app.use("/500", errorController.get500);
 app.use(errorController.get404);
 app.use((error, req, res, next) => {
+  console.log(error);
   res.status(500).render("500", {
     pageTitle: "Error!",
     path: "/500",
