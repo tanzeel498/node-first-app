@@ -15,9 +15,6 @@ const adminRoutes = require("./routes/admin");
 const shopRoutes = require("./routes/shop");
 const authRoutes = require("./routes/auth");
 
-const MONGODB_URI =
-  "mongodb+srv://tanzeel498:BOTFijyz20Cq7LlV@cluster0.vln0kdt.mongodb.net/shop?retryWrites=true&w=majority";
-
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
@@ -34,6 +31,16 @@ const fileStorage = multer.diskStorage({
     );
   },
 });
+const fileFilter = (req, file, cb) => {
+  if (
+    file.mimetype === "image/png" ||
+    file.mimetype === "image/jpg" ||
+    file.mimetype === "image/jpeg"
+  ) {
+    cb(null, true);
+  }
+  cb(null, false);
+};
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -66,7 +73,7 @@ app.use((req, res, next) => {
 
 app.use(
   "/admin",
-  multer({ storage: fileStorage }).single("image"),
+  multer({ storage: fileStorage, fileFilter }).single("image"),
   adminRoutes
 );
 app.use(shopRoutes);
@@ -83,7 +90,7 @@ app.use((error, req, res, next) => {
 });
 
 mongoose
-  .connect(MONGODB_URI)
+  .connect(process.env.MONGODB_URI)
   .then((result) => {
     console.log("mongoose connected");
     app.listen(4000);
