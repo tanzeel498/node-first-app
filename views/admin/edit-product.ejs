@@ -32,6 +32,7 @@
             <div class="form-control">
                 <label for="imageUrl">Image</label>
                 <input 
+                    class="<%= validationErrors.find(e => e.path === 'image') ? 'invalid' : '' %>"
                     type="file" 
                     name="image" 
                     id="image" >

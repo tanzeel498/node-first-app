@@ -17,7 +17,7 @@ const authRoutes = require("./routes/auth");
 
 const app = express();
 const store = new MongoDBStore({
-  uri: MONGODB_URI,
+  uri: process.env.MONGODB_URI,
   collection: "sessions",
 });
 const fileStorage = multer.diskStorage({
