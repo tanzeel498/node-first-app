@@ -4,6 +4,7 @@ images/
 dist-ssr
 *.local
 .env
+data/invoices
 
 # Editor directories and files
 .vscode/
