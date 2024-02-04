@@ -126,12 +126,19 @@ exports.getInvoice = (req, res, next) => {
       if (order.user.userId.toString() !== req.user._id.toString())
         return next(new Error("Unauthorized Action!"));
 
-      fs.readFile(invoicePath, (err, data) => {
-        if (err) return next(err);
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `inline; filename=${invoiceName}`);
-        res.send(data);
-      });
+      // fs.readFile(invoicePath, (err, data) => {
+      //   if (err) return next(err);
+      //   res.setHeader("Content-Type", "application/pdf");
+      //   res.setHeader("Content-Disposition", `inline; filename=${invoiceName}`);
+      //   res.send(data);
+      // });
+      const file = fs.createReadStream(invoicePath);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=${invoiceName}`
+      );
+      file.pipe(res);
     })
     .catch((err) => next(err));
 };
