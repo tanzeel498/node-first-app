@@ -41,7 +41,6 @@ exports.postAddProduct = (req, res, next) => {
   }
 
   const product = new Product({
-    _id: "65a50ecb8ed97e002bd5ff7e",
     title: title,
     price: price,
     description: description,

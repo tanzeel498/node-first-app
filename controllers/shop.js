@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const PDFDocument = require("pdfkit");
+
 const Product = require("../models/product");
 const Order = require("../models/order");
 
@@ -41,7 +43,6 @@ exports.getIndex = (req, res, next) => {
 };
 
 exports.getCart = (req, res, next) => {
-  console.log(req.user);
   req.user
     .populate("cart.items.productId")
     .then((user) => {
@@ -57,12 +58,9 @@ exports.getCart = (req, res, next) => {
 
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findById(prodId)
-    .then((product) => {
-      return req.user.addToCart(product);
-    })
+  req.user
+    .addToCart(prodId)
     .then((result) => {
-      console.log(result);
       res.redirect("/cart");
     })
     .catch((error) => next(error));
@@ -71,7 +69,7 @@ exports.postCart = (req, res, next) => {
 exports.postCartDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
   req.user
-    .removeFromCart(prodId)
+    .deleteItemFromCart(prodId)
     .then((result) => {
       res.redirect("/cart");
     })
@@ -126,19 +124,39 @@ exports.getInvoice = (req, res, next) => {
       if (order.user.userId.toString() !== req.user._id.toString())
         return next(new Error("Unauthorized Action!"));
 
-      // fs.readFile(invoicePath, (err, data) => {
-      //   if (err) return next(err);
-      //   res.setHeader("Content-Type", "application/pdf");
-      //   res.setHeader("Content-Disposition", `inline; filename=${invoiceName}`);
-      //   res.send(data);
-      // });
-      const file = fs.createReadStream(invoicePath);
+      const doc = new PDFDocument();
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename=${invoiceName}`
       );
-      file.pipe(res);
+      doc.pipe(fs.createWriteStream(invoicePath));
+      doc.pipe(res);
+
+      doc.fontSize(30).text("Invoice", { align: "center", underline: true });
+      doc.moveDown();
+      let totalPrice = 0;
+      order.products.forEach((item) => {
+        totalPrice += item.quantity * item.product.price;
+        doc.fontSize(14).text(item.product.title, {
+          align: "left",
+          continued: true,
+        });
+        doc.text(`${item.quantity} x $${item.product.price}`, {
+          align: "center",
+          continued: true,
+        });
+        doc.text("$" + (item.quantity * item.product.price).toFixed(2), {
+          align: "right",
+        });
+        doc.moveDown();
+      });
+
+      doc.moveDown();
+      doc.fontSize(20).text("Summary", { underline: true });
+      doc.fontSize(16).text(`Total Price : $${totalPrice}`, { align: "right" });
+
+      doc.end();
     })
     .catch((err) => next(err));
 };
