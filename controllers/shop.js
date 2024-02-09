@@ -6,13 +6,23 @@ const Product = require("../models/product");
 const Order = require("../models/order");
 const { ITEMS_PER_PAGE } = require("../util/constants");
 
-exports.getProducts = (req, res, next) => {
+exports.getProducts = async (req, res, next) => {
+  const pageNumber = +req.query.page || 1;
+
+  const numItems = await Product.find().countDocuments();
+
   Product.find()
+    .skip((pageNumber - 1) * ITEMS_PER_PAGE)
+    .limit(ITEMS_PER_PAGE)
     .then((products) => {
       res.render("shop/product-list", {
         prods: products,
         pageTitle: "All Products",
         path: "/products",
+        hasNextPage: pageNumber * ITEMS_PER_PAGE < numItems,
+        hasPrevPage: pageNumber > 1,
+        currentPage: pageNumber,
+        lastPage: Math.ceil(numItems / ITEMS_PER_PAGE),
       });
     })
     .catch((error) => next(error));
