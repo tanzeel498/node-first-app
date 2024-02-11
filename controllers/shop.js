@@ -97,6 +97,25 @@ exports.postCartDeleteProduct = (req, res, next) => {
     .catch((error) => next(error));
 };
 
+exports.getCheckout = (req, res, next) => {
+  req.user
+    .populate("cart.items.productId")
+    .then((user) => {
+      const products = user.cart.items;
+      let totalPrice = 0;
+      products.forEach((item) => {
+        totalPrice += item.productId.price * item.quantity;
+      });
+      res.render("shop/checkout", {
+        path: "/checkout",
+        pageTitle: "Checkout",
+        products: products,
+        totalPrice,
+      });
+    })
+    .catch((error) => next(error));
+};
+
 exports.postOrder = (req, res, next) => {
   req.user
     .populate("cart.items.productId")
