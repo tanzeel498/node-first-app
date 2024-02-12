@@ -1,6 +1,9 @@
 const fs = require("fs");
 const path = require("path");
 const PDFDocument = require("pdfkit");
+const stripe = require("stripe")(
+  "sk_test_51OkjI5KmzrzovZnjm6zX9Yy7qf1zMzoeN0wa1oRRy7MATWwoM764yU3iWtPNEcWJBF1jeRU5NYOd9nM8q9mbDsJG00ff8eLPDg"
+);
 
 const Product = require("../models/product");
 const Order = require("../models/order");
@@ -97,23 +100,41 @@ exports.postCartDeleteProduct = (req, res, next) => {
     .catch((error) => next(error));
 };
 
-exports.getCheckout = (req, res, next) => {
-  req.user
-    .populate("cart.items.productId")
-    .then((user) => {
-      const products = user.cart.items;
-      let totalPrice = 0;
-      products.forEach((item) => {
-        totalPrice += item.productId.price * item.quantity;
-      });
-      res.render("shop/checkout", {
-        path: "/checkout",
-        pageTitle: "Checkout",
-        products: products,
-        totalPrice,
-      });
-    })
-    .catch((error) => next(error));
+exports.postCheckout = async (req, res, next) => {
+  try {
+    const user = await req.user.populate("cart.items.productId");
+    const products = user.cart.items;
+    let totalPrice = 0;
+    products.forEach((item) => {
+      totalPrice += item.productId.price * item.quantity;
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      line_items: products.map((p) => {
+        return {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: p.productId.title,
+              description: p.productId.description,
+            },
+            unit_amount: p.productId.price * 100,
+          },
+          quantity: p.quantity,
+        };
+      }),
+      mode: "payment",
+      payment_method_types: ["card"],
+      success_url: req.protocol + "://" + req.get("host") + "/checkout/success",
+      cancel_url: req.protocol + "://" + req.get("host") + "/cart",
+    });
+
+    console.log(session);
+
+    res.status(303).redirect(session.url);
+  } catch (err) {
+    next(err);
+  }
 };
 
 exports.postOrder = (req, res, next) => {
