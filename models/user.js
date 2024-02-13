@@ -22,6 +22,7 @@ const userSchema = new Schema({
       },
     ],
   },
+  paymentId: String,
 });
 
 userSchema.methods.addToCart = function (productId) {

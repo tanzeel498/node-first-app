@@ -130,6 +130,8 @@ exports.postCheckout = async (req, res, next) => {
     });
 
     console.log(session);
+    req.user.paymentId = session.id;
+    user.save(); // no need to await i.e fire and go
 
     res.status(303).redirect(session.url);
   } catch (err) {
@@ -137,7 +139,26 @@ exports.postCheckout = async (req, res, next) => {
   }
 };
 
-exports.postOrder = (req, res, next) => {
+exports.getConfirmPayment = async (req, res) => {
+  try {
+    const session = await stripe.checkout.sessions.retrieve(req.user.paymentId);
+    if (!session) return res.redirect("/");
+    if (session.payment_status === "paid") {
+      return res.redirect("/orders/" + req.user.paymentId);
+    }
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.postOrder = async (req, res, next) => {
+  const { paymentId } = req.params;
+  if (req.user.paymentId !== paymentId) {
+    return res.redirect("/");
+  }
+
+  req.user.paymentId = undefined;
+  await req.user.save();
   req.user
     .populate("cart.items.productId")
     .then((user) => {
